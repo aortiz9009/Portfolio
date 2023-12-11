@@ -1,0 +1,187 @@
+---
+title: "Homework 3"
+author: "Arturo Ortiz"
+date: "2023-11-30"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 1 #
+```{r}
+r <- matrix(c(1.00,0.44,0.41,0.29,0.33,0.25,
+ 0.44,1.00,0.35,0.35,0.32,0.33,
+ 0.41,0.35,1.00,0.16,0.19,0.18,
+ 0.29,0.35,0.16,1.00,0.59,0.47,
+ 0.33,0.32,0.19,0.59,1.00,0.46,
+ 0.25,0.33,0.18,0.47,0.46,1.00), nrow = 6, byrow = TRUE)
+colnames(r) <- c("French", "English", "History", "Arithmetic", "Algebra", "Geometry")
+rownames(r) <- c("French", "English", "History", "Arithmetic", "Algebra", "Geometry")
+r
+```
+
+
+## A ##
+Students who performed well in the areas of geometry, algebra, and arithmetic can be used to understand factor 1. Students who performed well in the areas of French, English, and history can be used to interpret factor 2.
+
+```{r}
+efa <- factanal(covmat = r, factors = 2)
+print(efa, cut = 0.5)
+```
+
+
+## B ##
+The class categories with the largest loadings can be used to name these factors. Math might be the first factor. Humanities can be recognized as Factor 2. Someone might suggest that factor 3 is trigonometry.
+
+```{r}
+efa2 <- factanal(covmat = r, factors = 3)
+efa2
+```
+
+
+## C ##
+The orthogonal rotation known as Varimax rotation is used. This rotation reveals which variables have a variance that is closest to one or zero among the resulting components. This shows which correlations between the components are high or low. 
+
+
+## D ##
+Students who performed well in every subject except history might be used to understand factor 1. Students who performed well in French, English, and history but poorly in arithmetic, algebra, and geometry might be attributed to factor 2.
+
+```{r}
+efa.nr <- factanal(covmat = r, factors = 2, rotation = "none")
+efa.nr
+```
+
+
+
+
+
+# Problem 2 #
+```{r}
+genes <- read.csv("https://raw.githubusercontent.com/EricBrownTTU/ISQS6350/main/geneexpression.csv", header = FALSE)
+```
+
+## A ##
+```{r}
+genes.d <- as.dist(1 - cor(genes))
+genes.hca <- hclust(genes.d, "average")
+plot(genes.hca, main = "Average Linkage Dendrogram", cex = 0.3)
+```
+
+
+## B ##
+The samples are divided into two groups based on genes. The patients in good health and the sick group are the two groups.
+
+## C ##
+Since both the Single Linkage and Complete Linkage indicate that the genes first split into two groups, this has no bearing on the conclusion drawn in section B.
+
+```{r}
+genes.hcs <- hclust(genes.d, "single")
+plot(genes.hcs, main = "Single Linkage Dendrogram")
+```
+
+
+```{r}
+genes.hcc <- hclust(genes.d, "complete")
+plot(genes.hcc, main = "Complete Linkage Dendrogram")
+```
+
+## D ##
+```{r}
+genes.ct <- cutree(genes.hcc, 2)
+plot(genes.d, col = genes.ct, main = "Complete Linkage")
+```
+
+
+# Problem 3 #
+```{r}
+urlRemote <- "https://raw.githubusercontent.com/"
+pathGithub <- "EricBrownTTU/ISQS6350/main/"
+filename <- "protein.csv"
+protein1 <- read.csv(paste0(urlRemote, pathGithub, filename))
+protein <- protein1[,-1]
+```
+
+## A ##
+```{r}
+protein.s <- scale(protein)
+pro.km <- kmeans(protein.s, centers = 4, nstart = 10)
+pro.km$tot.withinss
+```
+```{r}
+pro.wgss <- function(mydata, maxc){
+  wss <- numeric(maxc)
+  for (i in 1:maxc){
+    wss[i] <- kmeans(mydata, iter.max = 100,
+                     centers = i, nstart = 10)$tot.withinss
+  }
+  plot(1:maxc, wss, type = "b",
+       xlab = "Number of Clusters",
+       ylab = "Within Groups Sum of Squares",
+       main = "Scree Plot")
+}
+pro.wgss(protein.s, maxc = 20)
+```
+
+## B ##
+Every nation with an identical number underneath it belongs to the same cluster. Belgium, Denmark, Finland, France, Ireland, Norway, Sweden, and the United Kingdom make up Cluster 1. Spain and Portugal are in Cluster 2. Austria, Czechoslovakia, East Germany, The Netherlands, Poland, Switzerland, and West Germany are all included in Cluster 3.  Albania, Bulgaria, Greece, Hungary, Italy, Romania, USSR, and Yugoslavia are included in Cluster 4.
+```{r}
+protein2 <- read.csv(paste0("https://raw.githubusercontent.com/", "EricBrownTTU/ISQS6350/main/protein.csv"), row.names = "Country")
+protein2.s <- scale(protein2)
+protein2.km <- kmeans(protein2.s, centers = 4, nstart = 10)
+protein2.km$cluster
+```
+
+## C ##
+Protein averages for red and white meat, milk, fish, cereals, and starchy foods are higher in Cluster 1, indicating that these nations consume a lot of animal products. With a small bit of red meat, nuts/seeds, and starchy foods, Cluster 2 has high average protein content in cereals, fish, eggs, and fruits/veggies. This indicates that the nations in this cluster have certain places that are more accessible to land or water, which affects how much protein they eat. The abundance of grains, milk, and red and white meat in Cluster 3 suggests these nations will be slightly more landlocked than those in Cluster 2. Cluster 4's main diet consists of milk and grains, with traces of red and white meat as well as nuts and seeds, indicating that these nations get their protein from animals.
+```{r}
+aggregate(protein2, by = list(cluster = protein2.km$cluster), mean)
+```
+
+## D ##
+Two clusters were selected for the data by the model-based clustering technique. Albania, Bulgaria, Greece, Hungary, Italy, Portugal, Romania, Spain, USSR, and Yugoslavia are all included in Cluster 1. Cluster 2 includes the following countries: Denmark, East Germany, Norway, Poland, Sweden, Switzerland, The Netherlands, United Kingdom, West Germany, Austria, Belgium, Czechoslovakia, and Finland.
+```{r}
+library(mclust)
+pro.mc <- Mclust(protein2[,1:9])
+table(pro.mc$classification, protein1$Country)
+plot(protein2, col = pro.mc$classification)
+```
+
+## E ##
+The most uncertain countries are USSR from cluster 1 and Poland from cluster 2. Poland had an uncertainty of 0.29%, whereas the USSR had 0.23%.
+ 
+```{r}
+pro.mc2 <- Mclust(protein2[,1:9])
+plot(pro.mc2, what = "uncertainty", dimens = c(1,9))
+text(protein2, labels = rownames(protein2), cex = 0.6)
+```
+```{r}
+protein2.clust.data <- cbind(rownames(protein2), pro.mc2$classification,
+                          pro.mc2$uncertainty)
+protein2.clust.data[order(pro.mc2$uncertainty),]
+```
+
+# Problem 4 #
+```{r}
+courses <- read.csv("https://raw.githubusercontent.com/EricBrownTTU/ISQS6350/main/Coursetopics.csv", header = TRUE)
+courses <- as.matrix(courses)
+library(arules)
+```
+## A ##
+There were 179 rules found based on the support, confidence, and minlen criteria applied to this collection of association rules. 
+```{r}
+myrules <- apriori(courses, parameter = list(support = 0.01, confidence = 0.25, minlen = 1))
+```
+## B ##
+The lift indicates that students are almost four times more likely to take the Data Mining course if they take the intro, regression, and prediction courses.
+Lift = 4.01, support = 0.014, and confidence = 0.71.
+```{r}
+inspect(sort(myrules, by = "lift")[1])
+```
+## C ##
+The five rows represent the five possible classes a student might enroll in: Cat.Data, Forecast, DOE, Data Mining, and SW. Given that students are 2.4 times more likely to take SW following Intro and Regression, it is advised that they enroll in it. Additionally, SW has the most confidence (0.54).
+```{r}
+course.rule <- subset(myrules, subset = lhs %ain% c("Intro", "Regression"))
+inspect(course.rule[1:5])
+```
