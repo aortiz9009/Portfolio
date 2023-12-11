@@ -1,0 +1,179 @@
+---
+title: "Homework 2"
+author: "Arturo Ortiz"
+date: "2023-06-17"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+# Problem 1 #
+
+### A ###
+
+Expected value is 33.75 and Standard deviation is 4.308
+
+n = 75
+p = 0.45
+x = 75
+
+expectedvalue = n*p
+standarddeviation = sqrt(n*p*(1-p))
+
+expectedvalue
+standarddeviation
+
+### B ###
+
+All possible values of X.
+
+dbinom(c(0:75),75,0.45)
+
+### C ###
+
+If the true effetiveness of the drug is truly 45% and the probablility of such finding in the trial, with the assumption that the true effectiveness of the drug is 45%.
+
+sd = sqrt(.45*.55/75)
+
+sd
+
+P = ((0.3-0.45)/sd)
+
+P
+
+### D ###
+
+The Mean is 33.7641 and the Standard Deviation is 4.340592. 
+
+x = rbinom(10000, 75, 0.45)
+mean(x)
+sd(x)
+
+The results are very close to the results in part A. They would be different based on sampling errors. 
+
+
+
+# Problem 2 #
+
+### A ###
+
+The expected value is 600 and the standard deviation is 24.4949. 
+
+lambda = 600
+
+expected_value = lambda
+
+standard_deviation = sqrt(lambda)
+
+expected_value
+standard_deviation
+
+### B ###
+
+Possibility of all possible values of X graphically and the collective probability of each grouping of 100. 
+
+x = 0:600
+lambda = 600
+
+x = 0:600
+prob = dpois(x, lambda)
+
+plot(x, prob, type = "h", main = "Poisson Distribution", xlab = "Number of Patrons", ylab = "Probability")
+
+group_probabilities = sapply(seq(0, 900, by = 100), function(a) sum(dpois(a:(a + 99), lambda)))
+group_probabilities
+
+### C ###
+
+The probablility is 0.0012
+
+prob_more_than_675 = 1 - ppois(675, lambda)
+prob_more_than_675
+
+### D ###
+
+Both probabilities of B and D are similar. This means that the simulation in D aligns with the Poisson distribution. 
+
+simulated_patrons = rbinom(365, size = 600, prob = lambda/600)
+
+hist(simulated_patrons, main = "Simulated Workload", xlab = "Number of Patrons", ylab = "Frequency", breaks = seq(0, 600, by = 100))
+
+
+
+
+
+
+
+
+
+
+# Problem 3 #
+
+### A ###
+
+Yes, this does look normally distributed. The shape of the histogram indicates that it is normally distributed. 
+
+insurance <- read.csv("https://raw.githubusercontent.com/EricBrownTTU/ISQS5346/main/insurance.csv")
+
+hist(insurance$bmi, main = "BMI Histogram", xlab = "BMI", ylab = "Frequency")
+
+### B ###
+
+mean_bmi <- mean(insurance$bmi)
+sd_bmi <- sd(insurance$bmi)
+n <- length(insurance$bmi)
+set.seed(123)
+simulated_bmi <- replicate(5, rnorm(n, mean_bmi, sd_bmi))
+
+### C ###
+
+par(mfrow = c(2, 3))
+hist(insurance$bmi, main = "Actual BMI Data", xlab = "BMI", ylab = "Frequency")
+for (i in 1:5) {
+  hist(simulated_bmi[, i], main = paste("Simulated BMI Data", i), xlab = "BMI", ylab = "Frequency")
+}
+
+
+
+
+
+
+
+### D ###
+
+The points on the plot closely follow the straight line. This indicates that the BMI data is within a normal distribution. 
+
+qqnorm(insurance$bmi, main = "QQ Plot of BMI Data")
+qqline(insurance$bmi)
+
+
+### E ### 
+
+
+
+
+
+
+
