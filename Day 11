@@ -1,1 +1,90 @@
+from flask import Flask, render_template, request, redirect
+import sqlite3
 
+app = Flask(__name__)
+
+def init_db():
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            completed INTEGER DEFAULT 0
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def get_db_connection():
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+@app.route('/')
+def home():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM tasks')
+    tasks = cursor.fetchall()
+    conn.close()
+    return render_template('index.html', tasks=tasks)
+
+@app.route('/add', methods=['POST'])
+def add_task():
+    title = request.form['title']
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO tasks (title, completed) VALUES (?, 0)', (title,))
+    conn.commit()
+    conn.close()
+    return redirect('/')
+
+# Delete route now uses confirmation, so we only delete via POST after confirmation.
+@app.route('/delete/<int:task_id>', methods=['POST'])
+def delete_task(task_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+    conn.commit()
+    conn.close()
+    return redirect('/')
+
+# Route to render the delete confirmation page.
+@app.route('/confirm_delete/<int:task_id>')
+def confirm_delete(task_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM tasks WHERE id = ?', (task_id,))
+    task = cursor.fetchone()
+    conn.close()
+    return render_template('confirm_delete.html', task=task)
+
+@app.route('/complete/<int:task_id>')
+def complete_task(task_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('UPDATE tasks SET completed = 1 WHERE id = ?', (task_id,))
+    conn.commit()
+    conn.close()
+    return redirect('/')
+
+@app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
+def edit_task(task_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if request.method == 'POST':
+        new_title = request.form['title']
+        cursor.execute('UPDATE tasks SET title = ? WHERE id = ?', (new_title, task_id))
+        conn.commit()
+        conn.close()
+        return redirect('/')
+    else:
+        cursor.execute('SELECT * FROM tasks WHERE id = ?', (task_id,))
+        task = cursor.fetchone()
+        conn.close()
+        return render_template('edit.html', task=task)
+
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True)
